@@ -1,0 +1,848 @@
+from pathlib import Path
+import zipfile
+
+base = Path("/mnt/data/japan_together_2027")
+base.mkdir(exist_ok=True)
+
+html = r'''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#171714">
+  <meta name="description" content="A 13-day Japan autumn journey through Osaka, Nara, Kyoto, Hakone, Kawaguchiko and Tokyo.">
+  <title>Japan, Together — Autumn 2027</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home">JAPAN<span>,</span> TOGETHER.</a>
+    <nav class="toplinks" aria-label="Main navigation">
+      <a href="#overview">The route</a>
+      <a href="#weather">Weather</a>
+      <a href="#budget">Budget</a>
+      <a href="#day1">Itinerary</a>
+    </nav>
+  </header>
+
+  <nav class="side-nav" id="sideNav" aria-label="Page navigation"></nav>
+
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="eyebrow">A journey through Japan · Autumn 2027</div>
+      <h1>Japan,<br><em>together.</em></h1>
+      <p>Thirteen days. Two travellers. One unforgettable journey through autumn streets, quiet temples, mountain views and the city that never sleeps.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#overview">Explore the journey</a>
+        <a class="btn ghost" href="#day1">Start day one</a>
+      </div>
+      <div class="hero-meta">
+        <div><strong>13</strong><span>Days</span></div>
+        <div><strong>6</strong><span>Destinations</span></div>
+        <div><strong>RM25K</strong><span>Target budget</span></div>
+      </div>
+    </div>
+    <div class="scroll-note">Scroll to begin ↓</div>
+  </section>
+
+  <section class="panel" id="overview">
+    <div class="eyebrow">The journey at a glance</div>
+    <h2>From neon nights<br>to mountain mornings.</h2>
+    <p class="panel-intro">Our route begins in Osaka, takes us through Nara and Kyoto, then into the landscapes of Hakone and Mount Fuji before ending in Tokyo. Dates are a working plan for late November to early December 2027.</p>
+    <div class="route-grid">
+      <div class="route-item"><small>01 · Days 1–4</small><h3>Osaka</h3><p>Street food, Dotonbori, Shinsaibashi, Universal Studios and the aquarium.</p></div>
+      <div class="route-item"><small>02 · Day 3</small><h3>Nara</h3><p>A relaxed afternoon with Nara Park, Todai-ji and the old town.</p></div>
+      <div class="route-item"><small>03 · Days 5–7</small><h3>Kyoto</h3><p>Traditional streets, shrines, bamboo groves and autumn scenery.</p></div>
+      <div class="route-item"><small>04 · Day 8</small><h3>Hakone</h3><p>Lake Ashi, mountain scenery and a ryokan stay.</p></div>
+      <div class="route-item"><small>05 · Day 9</small><h3>Kawaguchiko</h3><p>Lake views, Oishi Park and the chance to see Mount Fuji.</p></div>
+      <div class="route-item"><small>06 · Days 10–13</small><h3>Tokyo</h3><p>Shibuya, Asakusa, Harajuku, Ginza and the journey home.</p></div>
+    </div>
+  </section>
+
+  <main id="itinerary"></main>
+
+  <section class="weather-section" id="weather">
+    <div class="weather-heading">
+      <span class="section-kicker">BE PREPARED</span>
+      <h2>Weather &amp; What to Wear</h2>
+      <p>A seasonal temperature guide for our Japan journey. Check the live forecast closer to departure.</p>
+    </div>
+    <div class="weather-notice">
+      <span aria-hidden="true">☁</span>
+      <p>These are broad seasonal planning estimates for late November and early December, not a forecast for 2027. Conditions can vary by year, elevation and time of day.</p>
+    </div>
+    <div class="weather-grid" id="weatherGrid"></div>
+    <div class="weather-source">
+      <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank" rel="noopener noreferrer">Japan Meteorological Agency — Official Forecast ↗</a>
+    </div>
+  </section>
+
+  <section class="panel" id="budget">
+    <div class="eyebrow">The financial plan</div>
+    <h2>Save for the memories.</h2>
+    <p class="panel-intro">Our working target is RM25,000 for two people. The figures below are planning estimates, not confirmed 2027 prices. Update the savings slider as your trip fund grows.</p>
+    <div class="budget-grid">
+      <div class="budget-list">
+        <div class="budget-row"><span>Flights (two people)</span><strong>RM4,500</strong></div>
+        <div class="budget-row"><span>Hotels (12 nights)</span><strong>RM5,200</strong></div>
+        <div class="budget-row"><span>Transport</span><strong>RM2,500</strong></div>
+        <div class="budget-row"><span>Food</span><strong>RM2,650</strong></div>
+        <div class="budget-row"><span>Attractions &amp; tickets</span><strong>RM1,100</strong></div>
+        <div class="budget-row"><span>Insurance &amp; eSIM</span><strong>RM400</strong></div>
+        <div class="budget-row"><span>Shopping allowance</span><strong>RM6,000</strong></div>
+        <div class="budget-row"><span>Emergency reserve</span><strong>RM2,150</strong></div>
+        <div class="budget-row"><strong>Total target</strong><strong>RM25,000</strong></div>
+      </div>
+      <div class="savings-box">
+        <div class="eyebrow">Savings tracker · MYR</div>
+        <h3>Our Japan fund</h3>
+        <p>Move the slider to update your savings progress. The suggested combined saving pace is RM2,000 per month.</p>
+        <label for="saved">Current savings</label>
+        <input type="range" min="0" max="25000" step="100" value="0" id="saved">
+        <div class="savings-amount" id="savedAmount">RM0</div>
+        <div class="progress"><div id="progressBar"></div></div>
+        <p id="progressText">0% of our RM25,000 goal</p>
+        <p class="small-note">At RM2,000 combined per month, 12 months adds RM24,000. Add RM1,000 to reach the target. Keep the emergency reserve separate from shopping money.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="footer">
+    <div class="eyebrow">The best is yet to come</div>
+    <h2>See you in Japan.</h2>
+    <p>NOVEMBER – DECEMBER 2027 · MADE FOR TWO</p>
+    <button class="btn ghost" type="button" id="openChange">Suggest a change</button>
+  </section>
+
+  <div class="preview-overlay" id="previewOverlay" aria-hidden="true">
+    <aside class="preview-panel" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+      <div class="preview-image" id="previewImage">
+        <button class="preview-close" id="previewClose" type="button" aria-label="Close preview">×</button>
+      </div>
+      <div class="preview-content">
+        <div class="preview-kicker" id="previewDay"></div>
+        <h2 id="previewTitle">Destination</h2>
+        <div class="preview-time" id="previewTime"></div>
+        <div class="preview-description" id="previewDescription"></div>
+        <div class="preview-notes" id="previewNotes"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="modal-bg" id="changeModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="changeTitle">
+      <div class="eyebrow">Update the travel journal</div>
+      <h2 id="changeTitle">Suggest a change.</h2>
+      <p>Describe what you'd like to change. Copy the request and paste it into our ChatGPT conversation so the website can be updated.</p>
+      <textarea id="changeText" placeholder="Example: Move Osaka Aquarium to Day 2 and add more time for shopping in Shinsaibashi..."></textarea>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="copyChange">Copy request</button>
+        <button class="btn ghost modal-close" type="button" id="closeChange">Close</button>
+      </div>
+      <p id="copyStatus" role="status"></p>
+    </div>
+  </div>
+</body>
+</html>
+'''
+
+css = r''':root {
+  --cream:#f4efe7;
+  --gold:#d8b77b;
+  --white:#fff;
+  --muted:rgba(255,255,255,.72);
+  --dark:#171714;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-snap-type:y proximity; }
+body { margin:0; background:var(--dark); color:white; font-family:'DM Sans',sans-serif; }
+body.preview-open, body.modal-open { overflow:hidden; }
+a { color:inherit; text-decoration:none; }
+button { font:inherit; cursor:pointer; }
+.topbar {
+  position:fixed; top:0; left:0; width:100%; z-index:20;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 5vw; background:linear-gradient(#0009,transparent);
+}
+.brand { font-family:'Cormorant Garamond',serif; font-size:25px; letter-spacing:2px; }
+.brand span { color:var(--gold); }
+.toplinks { display:flex; gap:24px; font-size:11px; letter-spacing:2px; text-transform:uppercase; }
+.toplinks a { opacity:.8; }
+.toplinks a:hover { color:var(--gold); }
+.hero,.day {
+  min-height:100svh; position:relative; display:flex; align-items:center;
+  padding:110px 9vw 70px; scroll-snap-align:start; isolation:isolate;
+  background-size:cover; background-position:center;
+}
+.hero:before,.day:before {
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,.24) 75%),
+             linear-gradient(0deg,rgba(0,0,0,.55),transparent 55%);
+}
+.hero { background-image:url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=2200&q=85'); }
+.hero-content { max-width:760px; }
+.eyebrow,.section-kicker { font-size:11px; letter-spacing:4px; text-transform:uppercase; color:var(--gold); margin-bottom:22px; display:inline-block; }
+h1,h2,h3 { font-family:'Cormorant Garamond',serif; font-weight:500; }
+.hero h1 { font-size:clamp(65px,10vw,135px); line-height:.82; margin:0 0 28px; }
+.hero h1 em { color:var(--gold); font-style:italic; }
+.hero p { font-size:15px; line-height:1.9; color:var(--muted); max-width:500px; }
+.hero-actions { display:flex; gap:14px; flex-wrap:wrap; margin-top:32px; }
+.btn {
+  border:1px solid var(--gold); padding:14px 22px; background:var(--gold);
+  color:#171714; font-size:11px; letter-spacing:2px; text-transform:uppercase; transition:.25s;
+}
+.btn:hover { background:transparent; color:white; }
+.btn.ghost { background:transparent; color:white; border-color:#ffffff80; }
+.btn.ghost:hover { background:white; color:#171714; }
+.hero-meta { display:flex; gap:35px; margin-top:55px; }
+.hero-meta strong { display:block; font-family:'Cormorant Garamond'; font-size:28px; font-weight:500; }
+.hero-meta span { font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+.day { background-color:#292721; background-size:110% auto; background-position:center calc(50% + var(--parallax,0px)); transition:background-position .15s linear; }
+.day:nth-of-type(even):before { background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.25)),linear-gradient(0deg,rgba(0,0,0,.6),transparent 60%); }
+.day-inner { width:min(760px,100%); }
+.day-number { font-family:'Cormorant Garamond'; font-size:17px; color:var(--gold); letter-spacing:3px; }
+.day h2 { font-size:clamp(48px,7vw,86px); line-height:.95; margin:12px 0 14px; }
+.day-sub { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:24px; }
+.day-intro { max-width:600px; line-height:1.8; font-size:14px; color:#eee; margin-bottom:25px; }
+.cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.place-card {
+  border:1px solid #ffffff45; background:rgba(12,12,12,.48); backdrop-filter:blur(12px);
+  padding:17px 18px; text-align:left; color:white; transition:.25s; min-height:78px; width:100%;
+  opacity:0; transform:translateX(35px);
+}
+.place-card.is-visible { opacity:1; transform:translateX(0); }
+.place-card:hover,.place-card.active { border-color:var(--gold); background:rgba(15,15,15,.78); transform:translateY(-2px); }
+.place-card:nth-child(2) { transition-delay:.12s; }
+.place-card:nth-child(3) { transition-delay:.24s; }
+.place-card:nth-child(4) { transition-delay:.36s; }
+.place-top { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.place-card h3 { font-size:22px; margin:0; }
+.place-card .time { font-size:10px; letter-spacing:1px; color:var(--gold); white-space:nowrap; }
+.place-card .hint { font-size:10px; color:#bbb; margin-top:8px; letter-spacing:.5px; }
+.place-detail { display:none; border-top:1px solid #ffffff30; margin-top:14px; padding-top:12px; font-size:12px; line-height:1.8; color:#e8e3da; }
+.place-card.active .place-detail { display:block; }
+.place-detail b { color:var(--gold); font-weight:500; }
+.day-footer { display:flex; gap:20px; flex-wrap:wrap; margin-top:22px; font-size:11px; color:#ddd; }
+.day-footer span { border-left:1px solid var(--gold); padding-left:10px; }
+.scroll-note { position:absolute; bottom:24px; left:9vw; font-size:9px; letter-spacing:3px; color:#ffffffa0; text-transform:uppercase; }
+.side-nav { position:fixed; right:25px; top:50%; transform:translateY(-50%); z-index:15; display:flex; flex-direction:column; gap:12px; }
+.side-nav a { width:7px; height:7px; border:1px solid #fff9; border-radius:50%; transition:.2s; }
+.side-nav a:hover,.side-nav a.current { background:var(--gold); border-color:var(--gold); transform:scale(1.5); }
+.panel { background:var(--cream); color:#24231f; padding:90px 9vw; }
+.panel .eyebrow { color:#9b7840; }
+.panel h2 { font-size:clamp(42px,6vw,70px); margin:0 0 20px; }
+.panel-intro { max-width:650px; line-height:1.8; color:#625e56; font-size:14px; }
+.route-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:35px; }
+.route-item { background:#fff; padding:22px; border:1px solid #e7dfd2; }
+.route-item small { color:#9b7840; letter-spacing:2px; text-transform:uppercase; font-size:9px; }
+.route-item h3 { font-size:27px; margin:9px 0; }
+.route-item p { font-size:12px; line-height:1.7; color:#6e695f; margin:0; }
+.budget-grid { display:grid; grid-template-columns:1fr 1fr; gap:45px; margin-top:35px; }
+.budget-list { display:grid; gap:0; }
+.budget-row { display:flex; justify-content:space-between; gap:16px; padding:13px 0; border-bottom:1px solid #ddd4c7; font-size:13px; }
+.budget-row strong { font-weight:600; }
+.savings-box { background:#24231f; color:white; padding:28px; }
+.savings-box h3 { font-size:32px; margin:0 0 8px; }
+.savings-box p { font-size:12px; line-height:1.7; color:#ccc; }
+.savings-box label { display:block; font-size:10px; letter-spacing:2px; color:var(--gold); margin:22px 0 8px; text-transform:uppercase; }
+.savings-box input { width:100%; accent-color:var(--gold); }
+.savings-amount { font-family:'Cormorant Garamond'; font-size:42px; margin-top:12px; }
+.progress { height:5px; background:#555; margin-top:8px; }
+.progress div { height:100%; background:var(--gold); width:0%; transition:.2s; }
+.small-note { font-size:10px!important; color:#aaa!important; }
+.footer { background:#171714; color:white; text-align:center; padding:65px 20px; }
+.footer h2 { font-size:42px; margin:0 0 10px; }
+.footer p { font-size:11px; color:#aaa; letter-spacing:1px; }
+
+/* WEATHER */
+.weather-section { padding:100px 7%; background:#111412; color:#f5f1e9; }
+.weather-heading { max-width:650px; margin-bottom:35px; }
+.weather-heading h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,5vw,4rem); font-weight:400; margin:12px 0; }
+.weather-heading p { color:#aaa; line-height:1.8; }
+.weather-notice { display:flex; gap:12px; align-items:center; padding:15px 18px; border:1px solid #424943; margin-bottom:30px; color:#c7c9c5; font-size:.85rem; }
+.weather-notice p { margin:0; }
+.weather-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.weather-card {
+  padding:25px; background:#1b211e; border:1px solid #343d37;
+  opacity:0; transform:translateY(35px);
+  transition:opacity 1s ease,transform 1s cubic-bezier(.2,.7,.2,1),border-color .3s ease;
+}
+.weather-card.is-visible { opacity:1; transform:translateY(0); }
+.weather-card:hover { border-color:#b5a17c; }
+.weather-card .weather-day { font-size:.7rem; letter-spacing:2px; color:#b5a17c; }
+.weather-card h3 { font-size:1.6rem; font-weight:400; margin:12px 0 5px; }
+.weather-card .weather-location { color:#aaa; font-size:.85rem; }
+.weather-temperatures { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0; }
+.weather-temp { background:#252d28; padding:15px 10px; }
+.weather-temp span { display:block; color:#aaa; font-size:.72rem; margin-bottom:8px; }
+.weather-temp strong { font-size:1.35rem; font-weight:400; }
+.weather-tip { color:#c7c9c5; font-size:.83rem; line-height:1.7; min-height:48px; }
+.weather-link { display:inline-block; margin-top:15px; color:#d1b98c; text-decoration:none; font-size:.8rem; border-bottom:1px solid #8e7b5e; padding-bottom:5px; }
+.weather-link:hover { color:white; }
+.weather-source { margin-top:35px; text-align:center; }
+.weather-source a { color:#d1b98c; text-decoration:none; }
+
+/* DESTINATION PREVIEW DRAWER */
+.preview-overlay {
+  position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.72);
+  backdrop-filter:blur(7px); opacity:0; visibility:hidden;
+  transition:opacity .45s ease,visibility .45s ease;
+}
+.preview-overlay.open { opacity:1; visibility:visible; }
+.preview-panel {
+  position:absolute; left:0; top:0; height:100%; width:min(520px,48vw);
+  overflow-y:auto; background:#171714; transform:translateX(-100%);
+  transition:transform .7s cubic-bezier(.2,.8,.2,1); box-shadow:20px 0 70px #0008;
+}
+.preview-overlay.open .preview-panel { transform:translateX(0); }
+.preview-image { height:48vh; min-height:260px; background-size:cover; background-position:center; position:relative; }
+.preview-image:after { content:""; position:absolute; inset:0; background:linear-gradient(0deg,#171714,transparent 75%); pointer-events:none; }
+.preview-close {
+  position:absolute; top:22px; right:22px; z-index:2; width:42px; height:42px;
+  border:1px solid #ffffff80; border-radius:50%; background:#0008; color:white; font-size:24px;
+}
+.preview-content { padding:0 34px 45px; margin-top:-35px; position:relative; z-index:2; }
+.preview-kicker { color:#d8b77b; text-transform:uppercase; letter-spacing:3px; font-size:10px; }
+.preview-content h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(38px,5vw,58px); line-height:1; margin:12px 0; }
+.preview-time { color:#d8b77b; font-size:11px; letter-spacing:2px; text-transform:uppercase; margin-bottom:25px; }
+.preview-description { font-size:14px; line-height:1.9; color:#ddd; }
+.preview-notes { border-top:1px solid #ffffff30; margin-top:25px; padding-top:20px; font-size:13px; line-height:1.9; color:#bbb; }
+.preview-notes strong { color:#d8b77b; font-weight:500; }
+
+/* CHANGE REQUEST MODAL */
+.modal-bg { display:none; position:fixed; inset:0; background:#000b; z-index:120; align-items:center; justify-content:center; padding:20px; }
+.modal-bg.show { display:flex; }
+.modal { background:var(--cream); color:#222; padding:28px; max-width:520px; width:100%; }
+.modal h2 { font-size:36px; margin:0 0 10px; }
+.modal p { font-size:12px; line-height:1.7; color:#666; }
+.modal textarea { width:100%; min-height:120px; padding:12px; border:1px solid #ccc; background:white; font:13px 'DM Sans'; resize:vertical; }
+.modal-actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.modal .btn.ghost { color:#222; border-color:#aaa; }
+.modal .btn.ghost:hover { background:#222; color:white; }
+#copyStatus { min-height:18px; }
+
+/* SCROLL REVEALS */
+.day-inner > *, .hero-content > *, .panel > *, .route-item, .budget-row, .savings-box {
+  opacity:0; transform:translateY(35px);
+  transition:opacity 1s ease,transform 1s cubic-bezier(.2,.7,.2,1);
+}
+.is-visible { opacity:1!important; transform:translateY(0)!important; }
+.place-card.is-visible { transform:translateX(0)!important; }
+.weather-card.is-visible { transform:translateY(0)!important; }
+
+/* TABLET */
+@media(max-width:900px) {
+  .weather-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .route-grid { grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:700px) {
+  .topbar { padding:14px 5vw; }
+  .brand { font-size:21px; }
+  .toplinks { gap:12px; }
+  .toplinks a { font-size:9px; letter-spacing:1px; }
+  .hero,.day { padding:100px 7vw 70px; background-position:center; }
+  .hero { background-size:cover; }
+  .hero h1 { font-size:68px; }
+  .hero-meta { gap:20px; margin-top:35px; }
+  .cards { grid-template-columns:1fr; }
+  .place-card { padding:15px; }
+  .side-nav { right:12px; gap:10px; }
+  .side-nav a { width:6px; height:6px; }
+  .route-grid { grid-template-columns:1fr; }
+  .budget-grid { grid-template-columns:1fr; gap:20px; }
+  .panel { padding:70px 7vw; }
+  .weather-section { padding:70px 6%; }
+  .weather-grid { grid-template-columns:1fr; }
+  .scroll-note { left:7vw; }
+  .preview-panel { width:92vw; }
+  .preview-image { height:38vh; }
+  .preview-content { padding:0 24px 35px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; }
+  .day-inner > *, .hero-content > *, .panel > *, .route-item, .budget-row, .savings-box, .place-card, .weather-card {
+    opacity:1!important; transform:none!important;
+  }
+}
+'''
+
+js = r'''/* ==================================
+   JAPAN, TOGETHER — AUTUMN 2027
+================================== */
+
+const days = [
+{
+ n:1,place:"Osaka",title:"Hello, Osaka.",sub:"Arrival · Dotonbori · First night",
+ date:"26 November · Working date",
+ intro:"Land at Kansai International Airport, settle into the hotel and ease into Japan with Osaka's glowing streets and famous food.",
+ photo:"https://images.unsplash.com/photo-1590559899731-a382839e5549?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Airport arrival","Morning","Arrive at KIX, immigration, collect luggage and travel into Osaka.","Allow time for airport procedures. Check the hotel luggage-drop policy if the room is not ready."],
+ ["Hotel check-in","Afternoon","Leave bags, freshen up and take a break.","Suggested base: Namba or Shinsaibashi for convenient evening exploring."],
+ ["Dotonbori","Evening","Walk along the canal, see the Glico sign and explore the neon streets.","Try takoyaki, okonomiyaki or ramen. Keep the first evening flexible after the flight."]
+ ],note:"Keep the first day light · Airport transfer depends on hotel location"
+},
+{
+ n:2,place:"Osaka",title:"The city lights.",sub:"Osaka Castle · Umeda",
+ date:"27 November · Working date",
+ intro:"A day for Osaka's history and skyline. Take the morning slowly, then head north for city views and shopping.",
+ photo:"https://images.unsplash.com/photo-1589452271712-64b8a66c7b71?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Osaka Castle","Morning","Explore the castle grounds and park.","Allow around 1.5–2 hours depending on whether you visit the museum interior."],
+ ["Lunch break","Midday","Find a nearby restaurant or casual food spot.","Keep lunch flexible rather than booking a fixed restaurant."],
+ ["Umeda","Afternoon","Explore the shopping district and department stores.","Great area for shopping, cafes and city architecture."],
+ ["Umeda Sky Building","Evening","Optional observatory visit for city views.","Check sunset time and ticket availability closer to the trip."]
+ ],note:"Transport: Osaka Metro / JR depending on hotel and stops"
+},
+{
+ n:3,place:"Nara + Osaka",title:"A little escape.",sub:"Nara afternoon · Shinsaibashi evening",
+ date:"28 November · Working date",
+ intro:"Keep the morning relaxed in Osaka. Head to Nara after lunch, visit the main sights, then return to Osaka for an evening in Shinsaibashi.",
+ photo:"https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Travel to Nara","Early afternoon","Take the JR Yamatoji Rapid or Kintetsu Railway.","Choose the station based on your first Nara attraction and route."],
+ ["Nara Park","Afternoon","Walk through the park and enjoy the scenery.","Deer are wild animals. Give them space and follow park guidance."],
+ ["Todai-ji Temple","Afternoon","Visit the Great Buddha Hall and temple grounds.","Check entry hours and ticket details before the visit."],
+ ["Naramachi","Late afternoon","Explore traditional streets, small shops and cafes.","Allow time to return to the station before it gets too late."],
+ ["Shinsaibashi","Evening","Return to Osaka for shopping and dinner.","This is the main shopping evening after Nara."]
+ ],note:"Nara is a day trip · No hotel change needed"
+},
+{
+ n:4,place:"Osaka",title:"A day of adventure.",sub:"Universal Studios Japan · Aquarium option",
+ date:"29 November · Working date",
+ intro:"A major theme-park day. Universal Studios Japan can easily take most of the day, so the aquarium is an optional extra rather than a guaranteed second stop.",
+ photo:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Universal Studios Japan","Early morning","Arrive before opening and prioritise your must-do attractions.","Check official opening hours, ticket rules and timed-entry requirements nearer the date. Express Pass pricing is separate."],
+ ["Park lunch","Midday","Eat inside the park and take a proper break.","Crowds and attraction queues can change the schedule."],
+ ["USJ afternoon","Afternoon","Continue rides, themed areas and shows.","Do not plan a tight evening booking while inside the park."],
+ ["Osaka Aquarium Kaiyukan","Optional evening","Visit only if park timing, aquarium hours and energy allow.","This combination is very ambitious. Better alternative: move the aquarium to Day 2 or another Osaka slot."]
+ ],note:"USJ is the priority · Aquarium is optional and depends on closing time"
+},
+{
+ n:5,place:"Kyoto",title:"Old-world Kyoto.",sub:"Travel · Gion · Yasaka Shrine",
+ date:"30 November · Working date",
+ intro:"Leave Osaka and settle into Kyoto. Spend the afternoon wandering through traditional streets and atmospheric shrine areas.",
+ photo:"https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Osaka → Kyoto","Morning","Take the JR Special Rapid train to Kyoto.","Around 30 minutes station-to-station; allow extra time for hotel transfers and luggage."],
+ ["Hotel check-in","Midday","Leave luggage and have lunch.","Suggested areas: Kyoto Station, Kawaramachi or the edge of Gion."],
+ ["Gion & Hanamikoji","Afternoon","Walk through Kyoto's historic district.","Be respectful of residents and follow local photography restrictions."],
+ ["Yasaka Shrine","Late afternoon","Explore the shrine and nearby streets.","Combine with a walk through the Higashiyama area."],
+ ["Sannenzaka & Ninenzaka","Evening","Browse traditional lanes, shops and food stops.","Some shops close earlier, so avoid arriving too late."]
+ ],note:"Hotel base: Kyoto · Travel by JR Special Rapid"
+},
+{
+ n:6,place:"Kyoto",title:"A thousand gates.",sub:"Fushimi Inari · Matcha · Tea culture",
+ date:"1 December · Working date",
+ intro:"A slower Kyoto day built around the iconic torii gates, a tea experience and a few relaxed stops.",
+ photo:"https://images.unsplash.com/photo-1478436127897-769e1b3f0f36?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Fushimi Inari Taisha","Morning","Walk through the famous red torii gates.","Go earlier to enjoy a calmer visit. You can choose how far up the mountain to walk."],
+ ["Lunch","Midday","Find a local restaurant around the station area.","Try soba, udon or a Japanese set meal."],
+ ["Tea experience","Afternoon","Enjoy a tea ceremony or matcha tasting.","Reserve ahead if you want a guided experience."],
+ ["Matcha cafes","Late afternoon","Explore a cafe and try Kyoto matcha desserts.","Popular cafes may have queues, especially in peak season."]
+ ],note:"Comfortable walking shoes recommended"
+},
+{
+ n:7,place:"Kyoto",title:"Into the green.",sub:"Arashiyama · Bamboo Grove · Riverside",
+ date:"2 December · Working date",
+ intro:"Explore western Kyoto's bamboo paths, temple gardens and riverside scenery. Autumn colours depend on the weather and seasonal timing.",
+ photo:"https://images.unsplash.com/photo-1522623349500-de37a56ea2a5?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Arashiyama Bamboo Grove","Morning","Walk through the bamboo path.","Arrive early for a quieter experience."],
+ ["Tenryu-ji","Late morning","Visit the temple and landscaped garden.","Check garden and temple opening times."],
+ ["Togetsukyo Bridge","Afternoon","Enjoy the river and mountain scenery.","Good area for a relaxed lunch and photographs."],
+ ["Optional autumn foliage","Late afternoon","Consider Eikando or another seasonal garden if timing works.","Seasonal colour varies year to year; check foliage updates before travelling."]
+ ],note:"Allow time for travel back to central Kyoto"
+},
+{
+ n:8,place:"Hakone",title:"A slower pace.",sub:"Kyoto · Odawara · Lake Ashi",
+ date:"3 December · Working date",
+ intro:"Trade the city for mountain scenery. Travel by Shinkansen to Odawara, continue into Hakone and enjoy a peaceful overnight stay.",
+ photo:"https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Kyoto → Odawara","Morning","Take the Tokaido Shinkansen.","Journey is roughly 2–2.5 hours depending on service. Check train times and ticket options."],
+ ["Odawara → Hakone","Midday","Continue by local train or bus to your accommodation.","Choose the transport based on your hotel area."],
+ ["Lake Ashi","Afternoon","Enjoy the lake views and surrounding scenery.","Sightseeing cruise is optional and weather dependent."],
+ ["Hakone Shrine","Late afternoon","Visit the shrine area if time and daylight allow.","Crowds can form around popular photo spots."],
+ ["Ryokan stay","Evening","Check in, relax and enjoy a traditional stay.","Confirm whether dinner and breakfast are included in the room rate."]
+ ],note:"Overnight in Hakone · Consider forwarding large luggage to Tokyo"
+},
+{
+ n:9,place:"Kawaguchiko",title:"Chasing Fuji.",sub:"Gotemba · Lake Kawaguchi · Oishi Park",
+ date:"4 December · Working date",
+ intro:"Travel towards the Fuji Five Lakes area. Keep the day flexible because Mount Fuji visibility depends on the weather.",
+ photo:"https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Hakone → Kawaguchiko","Morning","Travel by bus via the Gotemba area.","Check the latest route, operating days and reservation requirements before departure."],
+ ["Hotel check-in","Midday","Drop bags and have lunch.","Look for accommodation near Lake Kawaguchi; verify exactly what a Fuji-view room includes."],
+ ["Lake Kawaguchi","Afternoon","Walk by the lake and enjoy the mountain scenery.","Fuji visibility is never guaranteed."],
+ ["Oishi Park","Late afternoon","Visit the lakeside park and take photographs.","Check seasonal flower and foliage conditions."],
+ ["Chureito Pagoda","Optional","Visit if transport and daylight allow.","It involves stairs and can be crowded. Keep it flexible."]
+ ],note:"Overnight near Lake Kawaguchi · Early morning may offer another Fuji-view opportunity"
+},
+{
+ n:10,place:"Tokyo",title:"Welcome to Tokyo.",sub:"Shibuya · Hachiko · Shinjuku",
+ date:"5 December · Working date",
+ intro:"Arrive in the capital and step straight into the energy of Tokyo. Keep the afternoon focused around Shibuya and Shinjuku.",
+ photo:"https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Kawaguchiko → Tokyo","Morning","Take a highway bus or train connection into Tokyo.","Compare departure times and arrival stations when booking."],
+ ["Hotel check-in","Midday","Drop luggage and settle in.","Suggested bases: Shinjuku, Ueno or Tokyo Station area."],
+ ["Shibuya Crossing","Afternoon","See the famous crossing and Hachiko statue.","Expect crowds, especially during busy periods."],
+ ["Shibuya shopping","Late afternoon","Explore the shopping streets and department stores.","Keep purchases manageable before the final travel days."],
+ ["Shinjuku","Evening","Explore the city lights and find dinner.","Enjoy the atmosphere and plan a relaxed route back to the hotel."]
+ ],note:"Tokyo base for the final three nights"
+},
+{
+ n:11,place:"Tokyo",title:"Tradition & skyline.",sub:"Asakusa · Senso-ji · Ueno · Skytree",
+ date:"6 December · Working date",
+ intro:"A day that mixes old Tokyo with modern city views, from temple streets to the riverside skyline.",
+ photo:"https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Asakusa & Senso-ji","Morning","Visit the temple and explore Nakamise Shopping Street.","Go earlier to avoid the busiest crowds."],
+ ["Nakamise Street","Late morning","Browse traditional snacks and souvenirs.","Check shop opening times and keep some cash available."],
+ ["Ueno Park","Afternoon","Enjoy the park and nearby museums if interested.","Choose one museum rather than trying to fit everything in."],
+ ["Tokyo Skytree","Evening","Optional observatory visit and shopping complex.","Book tickets in advance if you want a specific time."]
+ ],note:"Use Tokyo Metro / JR depending on the order of stops"
+},
+{
+ n:12,place:"Tokyo",title:"One last city day.",sub:"Harajuku · Meiji · Omotesando · Ginza",
+ date:"7 December · Working date",
+ intro:"A final full day for fashion, cafes, architecture and shopping before heading home.",
+ photo:"https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Harajuku","Morning","Explore Takeshita Street and nearby shops.","Expect crowds and busy pedestrian areas."],
+ ["Meiji Jingu","Midday","Enjoy a peaceful walk through the forested shrine grounds.","Respect shrine etiquette and quiet areas."],
+ ["Omotesando","Afternoon","Explore architecture, boutiques and cafes.","A good place for a slower afternoon."],
+ ["Ginza","Evening","Enjoy the final shopping and dinner.","Keep time to pack and prepare for the airport journey."]
+ ],note:"Check luggage weight and airline baggage allowance tonight"
+},
+{
+ n:13,place:"Tokyo → KL",title:"Until next time.",sub:"Breakfast · Airport · Home",
+ date:"8 December · Working date",
+ intro:"A relaxed final morning, then make your way to the airport for the flight home. Leave enough time for airport procedures.",
+ photo:"https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=2200&q=85",
+ cards:[
+ ["Breakfast & check-out","Morning","Have breakfast, check the room and return the key.","Confirm checkout time and any luggage storage arrangements."],
+ ["Airport transfer","Before flight","Travel to Haneda or Narita depending on your flight.","Check your departure airport carefully; they are different airports."],
+ ["Return flight","Departure","Fly from Tokyo back to Kuala Lumpur.","Arrive at the airport with enough time for check-in, baggage and security."]
+ ],note:"Confirm flight terminal, airport transfer and baggage allowance"
+}
+];
+
+/* BUILD THE 13-DAY ITINERARY */
+const itinerary = document.getElementById("itinerary");
+const nav = document.getElementById("sideNav");
+
+days.forEach(day => {
+  const section = document.createElement("section");
+  section.className = "day";
+  section.id = "day" + day.n;
+  section.style.backgroundImage = `url('${day.photo}')`;
+
+  section.innerHTML = `
+    <div class="day-inner">
+      <div class="day-number">DAY ${String(day.n).padStart(2,"0")} / 13</div>
+      <h2>${day.title}</h2>
+      <div class="day-sub">${day.place} · ${day.sub}</div>
+      <div class="day-intro">${day.intro}</div>
+      <div class="cards">
+        ${day.cards.map((c,i) => `
+          <button class="place-card" type="button" aria-expanded="false" data-card-index="${i}">
+            <div class="place-top"><h3>${c[0]}</h3><span class="time">${c[1]}</span></div>
+            <div class="hint">Click to reveal schedule + notes</div>
+            <div class="place-detail"><b>Plan:</b> ${c[2]}<br><b>Notes:</b> ${c[3]}</div>
+          </button>
+        `).join("")}
+      </div>
+      <div class="day-footer"><span>${day.date}</span><span>${day.note}</span></div>
+    </div>
+    <div class="scroll-note">Continue the journey ↓</div>
+  `;
+
+  itinerary.appendChild(section);
+
+  const dot = document.createElement("a");
+  dot.href = "#day" + day.n;
+  dot.title = "Day " + day.n + " — " + day.place;
+  dot.setAttribute("aria-label", "Go to day " + day.n);
+  nav.appendChild(dot);
+});
+
+/* ATTRACTION CARDS: EXPAND DETAILS AND OPEN PREVIEW DRAWER */
+const preview = document.getElementById("previewOverlay");
+
+function openPreview(day, place) {
+  document.getElementById("previewImage").style.backgroundImage = `url('${day.photo}')`;
+  document.getElementById("previewDay").textContent =
+    `DAY ${String(day.n).padStart(2,"0")} · ${day.place}`;
+  document.getElementById("previewTitle").textContent = place[0];
+  document.getElementById("previewTime").textContent = place[1];
+  document.getElementById("previewDescription").textContent = place[2];
+  document.getElementById("previewNotes").innerHTML =
+    `<strong>TRAVEL NOTES</strong><br>${place[3]}`;
+
+  preview.classList.add("open");
+  preview.setAttribute("aria-hidden","false");
+  document.body.classList.add("preview-open");
+  document.getElementById("previewClose").focus();
+}
+
+function closePreview() {
+  preview.classList.remove("open");
+  preview.setAttribute("aria-hidden","true");
+  document.body.classList.remove("preview-open");
+}
+
+document.getElementById("itinerary").addEventListener("click", event => {
+  const card = event.target.closest(".place-card");
+  if (!card) return;
+
+  const section = card.closest(".day");
+  const dayNumber = Number(section.id.replace("day",""));
+  const day = days.find(item => item.n === dayNumber);
+  if (!day) return;
+
+  const cardIndex = Number(card.dataset.cardIndex);
+  const place = day.cards[cardIndex];
+  if (!place) return;
+
+  const isActive = card.classList.toggle("active");
+  card.setAttribute("aria-expanded", String(isActive));
+  openPreview(day, place);
+});
+
+document.getElementById("previewClose").addEventListener("click", closePreview);
+preview.addEventListener("click", event => {
+  if (event.target === preview) closePreview();
+});
+
+/* SCROLL REVEAL OBSERVER */
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("is-visible");
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold:0.12 });
+
+const animatedElements = document.querySelectorAll(
+  ".day-inner > *, .hero-content > *, .panel > *, " +
+  ".route-item, .budget-row, .savings-box, .place-card"
+);
+animatedElements.forEach(element => revealObserver.observe(element));
+
+/* WEATHER INFORMATION */
+const weatherDestinations = [
+  {
+    day:"DAY 01–04", name:"Osaka",
+    location:"Dotonbori · Osaka Castle · USJ",
+    high:"12–18°C", low:"5–10°C",
+    tip:"Comfortable layers, sweaters and a medium-weight jacket.",
+    query:"Osaka Japan"
+  },
+  {
+    day:"DAY 03", name:"Nara",
+    location:"Nara Park · Todai-ji · Naramachi",
+    high:"11–17°C", low:"3–8°C",
+    tip:"Bring a warm jacket, especially for afternoon and evening walks.",
+    query:"Nara Japan"
+  },
+  {
+    day:"DAY 05–07", name:"Kyoto",
+    location:"Gion · Fushimi Inari · Arashiyama",
+    high:"11–17°C", low:"3–8°C",
+    tip:"Layer up for temple visits and evening walks.",
+    query:"Kyoto Japan"
+  },
+  {
+    day:"DAY 08", name:"Hakone",
+    location:"Lake Ashi · Hakone Shrine",
+    high:"6–14°C", low:"-1–7°C",
+    tip:"Wear a warm coat. Temperatures vary with altitude.",
+    query:"Hakone Japan"
+  },
+  {
+    day:"DAY 09", name:"Kawaguchiko",
+    location:"Lake Kawaguchi · Oishi Park",
+    high:"7–12°C", low:"-3–3°C",
+    tip:"Prepare thermal layers, gloves and a warm jacket.",
+    query:"Lake Kawaguchi Japan"
+  },
+  {
+    day:"DAY 09", name:"Mount Fuji Viewpoints",
+    location:"Chureito Pagoda · Fuji viewing areas",
+    high:"3–10°C", low:"-5–2°C",
+    tip:"Exposed and elevated viewpoints can feel especially cold.",
+    query:"Mount Fuji Japan"
+  },
+  {
+    day:"DAY 10–13", name:"Tokyo",
+    location:"Shibuya · Asakusa · Harajuku · Ginza",
+    high:"11–17°C", low:"3–9°C",
+    tip:"A sweater and winter jacket should be useful.",
+    query:"Tokyo Japan"
+  }
+];
+
+const weatherGrid = document.getElementById("weatherGrid");
+weatherGrid.innerHTML = weatherDestinations.map(place => `
+  <article class="weather-card">
+    <span class="weather-day">${place.day}</span>
+    <h3>${place.name}</h3>
+    <p class="weather-location">${place.location}</p>
+    <div class="weather-temperatures">
+      <div class="weather-temp"><span>DAYTIME HIGH</span><strong>${place.high}</strong></div>
+      <div class="weather-temp"><span>NIGHT / LOW</span><strong>${place.low}</strong></div>
+    </div>
+    <p class="weather-tip">${place.tip}</p>
+    <a class="weather-link"
+       href="https://www.google.com/search?q=${encodeURIComponent("weather forecast " + place.query)}"
+       target="_blank" rel="noopener noreferrer">CHECK LIVE WEATHER ↗</a>
+  </article>
+`).join("");
+
+weatherGrid.querySelectorAll(".weather-card").forEach(card => revealObserver.observe(card));
+document.querySelectorAll(".weather-heading > *, .weather-notice, .weather-source").forEach(element => revealObserver.observe(element));
+
+/* PARALLAX BACKGROUND MOVEMENT */
+const daySections = document.querySelectorAll(".day");
+let scrollAnimationRunning = false;
+
+function updateParallax() {
+  daySections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    const screenHeight = window.innerHeight;
+    if (rect.bottom > 0 && rect.top < screenHeight) {
+      const movement = (rect.top / screenHeight) * -45;
+      section.style.setProperty("--parallax", movement + "px");
+    }
+  });
+  scrollAnimationRunning = false;
+}
+
+window.addEventListener("scroll", () => {
+  if (!scrollAnimationRunning) {
+    window.requestAnimationFrame(updateParallax);
+    scrollAnimationRunning = true;
+  }
+}, { passive:true });
+updateParallax();
+
+/* SIDE NAV ACTIVE STATE */
+const trackedSections = [
+  document.getElementById("home"),
+  document.getElementById("overview"),
+  ...days.map(day => document.getElementById("day" + day.n)),
+  document.getElementById("weather"),
+  document.getElementById("budget")
+];
+
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const id = entry.target.id;
+    nav.querySelectorAll("a").forEach(link => link.classList.remove("current"));
+    const dayIndex = days.findIndex(day => "day" + day.n === id);
+    if (dayIndex >= 0 && nav.children[dayIndex]) {
+      nav.children[dayIndex].classList.add("current");
+    }
+  });
+}, { threshold:0.45 });
+
+trackedSections.forEach(section => {
+  if (section) sectionObserver.observe(section);
+});
+
+/* SAVINGS TRACKER */
+const slider = document.getElementById("saved");
+
+function updateSavings() {
+  const amount = Number(slider.value);
+  const percent = Math.round(amount / 25000 * 100);
+  document.getElementById("savedAmount").textContent = "RM" + amount.toLocaleString("en-MY");
+  document.getElementById("progressBar").style.width = percent + "%";
+  document.getElementById("progressText").textContent = percent + "% of our RM25,000 goal";
+}
+
+slider.addEventListener("input", updateSavings);
+updateSavings();
+
+/* CHANGE REQUEST MODAL */
+const changeModal = document.getElementById("changeModal");
+
+function openChange() {
+  changeModal.classList.add("show");
+  changeModal.setAttribute("aria-hidden","false");
+  document.body.classList.add("modal-open");
+  document.getElementById("changeText").focus();
+}
+
+function closeChange() {
+  changeModal.classList.remove("show");
+  changeModal.setAttribute("aria-hidden","true");
+  document.body.classList.remove("modal-open");
+}
+
+async function copyChange() {
+  const field = document.getElementById("changeText");
+  const status = document.getElementById("copyStatus");
+  const request = field.value.trim();
+
+  if (!request) {
+    status.textContent = "Please describe the change first.";
+    return;
+  }
+
+  const fullRequest =
+    "Please update my Japan 2027 travel website with this change: " + request +
+    "\nKeep the cinematic design, responsive layout and existing itinerary unless the change requires otherwise.";
+
+  try {
+    await navigator.clipboard.writeText(fullRequest);
+    status.textContent = "Copied! Paste this into our ChatGPT conversation.";
+  } catch (error) {
+    field.value = fullRequest;
+    field.focus();
+    field.select();
+    status.textContent = "Clipboard access was blocked. The request is selected; copy it manually.";
+  }
+}
+
+document.getElementById("openChange").addEventListener("click", openChange);
+document.getElementById("closeChange").addEventListener("click", closeChange);
+document.getElementById("copyChange").addEventListener("click", copyChange);
+changeModal.addEventListener("click", event => {
+  if (event.target === changeModal) closeChange();
+});
+
+/* KEYBOARD ACCESSIBILITY */
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closePreview();
+    closeChange();
+  }
+});
+'''
+
+(base / "index.html").write_text(html, encoding="utf-8")
+(base / "style.css").write_text(css, encoding="utf-8")
+(base / "script.js").write_text(js, encoding="utf-8")
+
+zip_path = Path("/mnt/data/Japan_Together_Autumn_2027_Full_Website.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+    for filename in ("index.html", "style.css", "script.js"):
+        zf.write(base / filename, arcname=filename)
+
+print("Created the complete three-file website and ZIP package:")
+print(f"  {base / 'index.html'}")
+print(f"  {base / 'style.css'}")
+print(f"  {base / 'script.js'}")
+print(f"  {zip_path}")
